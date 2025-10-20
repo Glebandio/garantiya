@@ -244,6 +244,7 @@ function Chats() {
             }
         };
 
+
         fetchSupportDetail();
     }, [selectedChatData, token]);
 
