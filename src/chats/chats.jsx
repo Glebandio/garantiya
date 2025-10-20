@@ -20,6 +20,10 @@ function Chats() {
     const [searchText, setSearchText] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
+    const [initialComment, setInitialComment] = useState('');
+    const [houses, setHouses] = useState([]);
+    const [parking, setParking] = useState([]);
+
 
 
     const searchTimeout = useRef(null);
@@ -211,6 +215,38 @@ function Chats() {
         setTypingText(getTypingText());
         scrollToBottom()
     }, [typingUsers]);
+
+    useEffect(() => {
+        const fetchSupportDetail = async () => {
+            if (!selectedChatData || selectedChatData.chat_type !== 'SUPPORT') return;
+            if (!selectedChatData.interlocutor?.id) return;
+
+            try {
+                const response = await fetch(
+                    `https://garantbe.ru/chats/${selectedChatData.id}/participants/${selectedChatData.interlocutor.id}/detail/`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (!response.ok) throw new Error('Не удалось получить детали поддержки');
+
+                const data = await response.json();
+                console.log('📞 SUPPORT DETAIL:', data);
+                setHouses(data.houses || []);
+                setParking(data.parking || []);
+            } catch (error) {
+                console.error('Ошибка при получении деталей SUPPORT чата:', error);
+            }
+        };
+
+        fetchSupportDetail();
+    }, [selectedChatData, token]);
+
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ });
@@ -444,7 +480,8 @@ function Chats() {
 
     const readMessages = (messageIds) => {
         return sendWebSocketAction('read_message', {
-            message_ids: messageIds
+            // message_ids: messageIds,
+            chat_id: selectedChat,
         });
     };
 
@@ -661,8 +698,9 @@ function Chats() {
     const chatHeaderInfo = getChatHeaderInfo(selectedChatData);
 
     useEffect(() => {
-        if (isModalOpen && chatHeaderInfo.comment) {
+        if (isModalOpen && chatHeaderInfo.comment !== undefined) {
             setCommentText(chatHeaderInfo.comment);
+            setInitialComment(chatHeaderInfo.comment);
         }
     }, [isModalOpen, chatHeaderInfo.comment]);
 
@@ -673,7 +711,9 @@ function Chats() {
     const handleSaveComment = async () => {
         if (!selectedChat || userNames.length === 0) return;
 
-        const clientId = userNames[0].id;
+
+
+        const clientId = selectedChatData.interlocutor.id;
 
         try {
             const response = await fetch(
@@ -684,7 +724,7 @@ function Chats() {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`,
                     },
-                    body: JSON.stringify({ comment: commentText }),
+                    body: JSON.stringify({ admin_comment: commentText }),
                 }
             );
 
@@ -737,8 +777,8 @@ function Chats() {
                         <input
                             type="text"
                             placeholder={'Поиск'}
-                           value={searchText}
-                           onChange={handleSearchChange}
+                            value={searchText}
+                            onChange={handleSearchChange}
                         />
                     </div>
                 </div>
@@ -772,6 +812,7 @@ function Chats() {
                     <>
                         <div className="chats__window-high">
                             <div className="chats__header">
+
                                 <div className="chats__header-avatar">
                                     {chatHeaderInfo.name.charAt(0).toUpperCase()}
                                 </div>
@@ -807,8 +848,7 @@ function Chats() {
                                                                         src={file.file_url}
                                                                         alt={file.filename}
                                                                         className="message__image"
-                                                                        width={340}
-                                                                        height={560}
+                                                                        style={{maxWidth: '560px', maxHeight: '560px'}}
                                                                     />
                                                                 );
                                                             } else if (file.content_type === 'application/pdf') {
@@ -822,7 +862,7 @@ function Chats() {
                                                                         >
                                                                             <img src="/file.svg" alt=""/>
                                                                             <div className="file_info">
-                                                                            {file.filename}
+                                                                                {file.filename}
                                                                                 <span>
                                                                                     {formatFileSize(file.file_size)}
                                                                                 </span>
@@ -833,20 +873,20 @@ function Chats() {
                                                             } else {
                                                                 return (
                                                                     <div className={'messsage__type-file'}>
-                                                                    <a
-                                                                        key={file.id}
-                                                                        href={file.file_url}
-                                                                        download={file.filename}
-                                                                        className="message__pdf"
-                                                                    >
-                                                                        <img src="/file.svg" alt=""/>
-                                                                        <div className="file_info">
-                                                                            {file.filename}
-                                                                            <span>
+                                                                        <a
+                                                                            key={file.id}
+                                                                            href={file.file_url}
+                                                                            download={file.filename}
+                                                                            className="message__pdf"
+                                                                        >
+                                                                            <img src="/file.svg" alt=""/>
+                                                                            <div className="file_info">
+                                                                                {file.filename}
+                                                                                <span>
                                                                                     65 Мб
                                                                                 </span>
-                                                                        </div>
-                                                                    </a>
+                                                                            </div>
+                                                                        </a>
                                                                     </div>
                                                                 );
                                                             }
@@ -893,36 +933,35 @@ function Chats() {
                             )}
                         </div>
 
-                            {attachedFiles.length > 0 && (
-                                <div className="attached-files">
-                                    {attachedFiles.map((file, index) => (
-                                        <div key={index} className="attached-file">
-                                            {file.type.startsWith("image/") ? (
-                                                <img
-                                                    src={URL.createObjectURL(file)}
-                                                    alt={file.name}
-                                                    className="attached-file__preview"
-                                                />
-                                            ) : (
-                                                <div className="attached-file__icon">
-                                                    <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <rect width="46" height="46" rx="23" fill="#D2AD84"/>
-                                                        <path d="M32.9907 16.412C32.9994 16.3569 32.9994 16.3009 32.9907 16.2458C32.9919 16.2254 32.9919 16.2049 32.9907 16.1845C32.9401 16.1037 32.8738 16.0325 32.7953 15.9746L27.5209 11.1286C27.46 11.0779 27.3909 11.0366 27.3163 11.0061H27.2512C27.1957 10.998 27.1392 10.998 27.0837 11.0061H13.6977C13.524 11.0074 13.3569 11.0687 13.2282 11.1784C13.0995 11.2881 13.0183 11.4385 13 11.601V34.344C13.0024 34.5172 13.0767 34.6828 13.207 34.8053C13.3373 34.9279 13.5134 34.9977 13.6977 35H32.3023C32.4866 34.9977 32.6627 34.9279 32.793 34.8053C32.9233 34.6828 32.9976 34.5172 33 34.344V16.4557C33 16.4557 32.9907 16.4295 32.9907 16.412ZM31.6047 17.1118H27.0372C26.8522 17.1118 26.6747 17.0426 26.5439 16.9196C26.413 16.7966 26.3395 16.6297 26.3395 16.4557V12.257H26.7209L27.707 13.1317L30.5628 15.7559L31.5767 16.6831L31.6047 17.1118Z" fill="white"/>
-                                                    </svg>
-                                                    <span className="attached-file__name">{file.name}</span>
-                                                    <p>{formatFileSize(file.size)}</p>
-                                                </div>
-                                            )}
+                        {attachedFiles.length > 0 && (
+                            <div className="attached-files">
+                                {attachedFiles.map((file, index) => (
+                                    <div key={index} className="attached-file">
+                                        {file.type.startsWith("image/") ? (
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={file.name}
+                                                className="attached-file__preview"
+                                            />
+                                        ) : (
+                                            <div className="attached-file__icon">
+                                                <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect width="46" height="46" rx="23" fill="#D2AD84"/>
+                                                    <path d="M32.9907 16.412C32.9994 16.3569 32.9994 16.3009 32.9907 16.2458C32.9919 16.2254 32.9919 16.2049 32.9907 16.1845C32.9401 16.1037 32.8738 16.0325 32.7953 15.9746L27.5209 11.1286C27.46 11.0779 27.3909 11.0366 27.3163 11.0061H27.2512C27.1957 10.998 27.1392 10.998 27.0837 11.0061H13.6977C13.524 11.0074 13.3569 11.0687 13.2282 11.1784C13.0995 11.2881 13.0183 11.4385 13 11.601V34.344C13.0024 34.5172 13.0767 34.6828 13.207 34.8053C13.3373 34.9279 13.5134 34.9977 13.6977 35H32.3023C32.4866 34.9977 32.6627 34.9279 32.793 34.8053C32.9233 34.6828 32.9976 34.5172 33 34.344V16.4557C33 16.4557 32.9907 16.4295 32.9907 16.412ZM31.6047 17.1118H27.0372C26.8522 17.1118 26.6747 17.0426 26.5439 16.9196C26.413 16.7966 26.3395 16.6297 26.3395 16.4557V12.257H26.7209L27.707 13.1317L30.5628 15.7559L31.5767 16.6831L31.6047 17.1118Z" fill="white"/>
+                                                </svg>
+                                                <span className="attached-file__name">{file.name}</span>
+                                                <p>{formatFileSize(file.size)}</p>
+                                            </div>
+                                        )}
 
 
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         <div className="chats__input">
                             <button className="chats__input-attach" onClick={handleAttachClick}>
                                 <input
-
                                     type="file"
                                     multiple
                                     ref={fileInputRef}
@@ -943,7 +982,10 @@ function Chats() {
                                 onClick={sendMessage}
                                 disabled={!messageText.trim() || !isConnected}
                             >
-                                <img src="/sent.svg" alt=""/>
+                                <svg width="34" height="33" viewBox="0 0 34 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2.36122 32.5694L33.3074 17.0963C33.7988 16.8506 33.7988 16.1494 33.3074 15.9037L2.37912 0.439558C1.31665 -0.0916754 0.142284 0.926847 0.517921 2.05376L4.08559 12.7567C4.41266 13.738 5.27761 14.4415 6.30486 14.562L21.6398 16.3601C21.7979 16.3786 21.7964 16.6085 21.6381 16.6251L6.33873 18.2263C5.29388 18.3357 4.4106 19.0483 4.08279 20.0464L0.498179 30.9608C0.128409 32.0866 1.30129 33.0994 2.36122 32.5694Z" fill="#D2AD84"/>
+                                </svg>
+
                             </button>
                         </div>
                     </>
@@ -963,40 +1005,70 @@ function Chats() {
                             </div>
                             <p className={'modal__name'}>{chatHeaderInfo.name}</p>
                             {selectedChatData?.chat_type !== 'SUPPORT' ? (
-                            <div className="modal__participants">
+                                <div className="modal__participants">
 
-                                <ul>
-                                    {userNames.map(user => (
-                                        <li key={user.id}>
-                                            <div>
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <p>{user.name}</p></li>
-                                    ))}
-                                </ul>
-                            </div>
-                            ) : (
-                            <>
-                                <p className={'modal__category'}>Объекты</p>
-                                <div className={'modal__objects'}>
-                                    <div className="modal__object">
-                                        <img src="/house.svg" alt=""/>
-                                        <p className={'modal__complex'}>{chatHeaderInfo.housing_complex}</p>
-                                    </div>
-                                    <div className={'modal__objects-elements'}>
-                                        {formatAddress(chatHeaderInfo.address, chatHeaderInfo.status)}
-                                    </div>
+                                    <ul>
+                                        {userNames.map(user => (
+                                            <li key={user.id}>
+                                                <div>
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <p>{user.name}</p></li>
+                                        ))}
+                                    </ul>
                                 </div>
-                                <p className={'modal__category'}>Комментарий</p>
-                                <textarea
-                                    className={'modal__comment-area'}
-                                    value={commentText}
-                                    onChange={handleCommentChange}
-                                    cols="30"
-                                    rows="10"
-                                />
-                                <button className={'modal__save'} onClick={handleSaveComment}>Сохранить</button>
-                            </>
+                            ) : (
+                                <>
+                                    <p className={'modal__category'}>Объекты</p>
+                                    <div className={'modal__objects'}>
+                                        <div className="modal__object">
+                                            <img src="/house.svg" alt=""/>
+                                            <p className={'modal__complex'}>{chatHeaderInfo.housing_complex}</p>
+                                        </div>
+                                        {houses.length > 0 ? (
+                                            houses.map(house => (
+                                        <div className={'modal__objects-elements'}>
+                                            {formatAddress(house?.full_address , house.status)}
+                                        </div>
+                                            ))
+                                        ) : (
+                                            <></>
+                                            )}
+                                        {parking.length > 0 ? (
+                                            parking.map(parkplace => (
+                                                <div className={'modal__objects-elements'}>
+                                                   <div className="park">
+                                                       <div className="modal__adres-info">
+                                                       <p>Парковочное место № {parkplace.parking_no}</p>
+                                                           <span>
+                                                               Владелец
+                                                           </span>
+                                                       </div>
+                                                       <p>
+                                                           {parkplace.name} {parkplace.parking_info}
+                                                       </p>
+                                                   </div>
+                                                </div>
+                                            )) ):
+                                                (
+                                            <>
+                                            </>
+                                                )
+                                        }
+                                    </div>
+                                    <p className={'modal__category'}>Комментарий</p>
+                                    <textarea
+                                        className={'modal__comment-area'}
+                                        value={commentText}
+                                        onChange={handleCommentChange}
+                                        cols="30"
+                                        rows="10"
+
+                                    />
+                                    <button className={'modal__save'} onClick={handleSaveComment}
+                                            disabled={commentText === initialComment}
+                                    >Сохранить</button>
+                                </>
                             )}
                         </div>
                     </div>

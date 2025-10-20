@@ -210,6 +210,9 @@
 
     &-info{
       background: transparent;
+      position: absolute;
+      right: rem(20);
+      top: auto;
     }
   }
 
@@ -246,6 +249,16 @@
 
     &-sent{
       background: transparent;
+
+      &:disabled{
+        svg{
+          path{
+            fill: #ECEAE5;
+          }
+        }
+      }
+
+
     }
   }
 
@@ -324,6 +337,8 @@
     border-radius: rem(20);
     display: flex;
     flex-direction: column;
+    height: rem(280);
+    overflow-y: auto;
 
     &-elements{
       display: flex;
@@ -402,19 +417,27 @@
   resize: none;
   padding: rem(20) rem(20);
   outline: none;
+  font-family: 'Arial', sans-serif;
+
 }
 
 
 .modal__save{
-  background: #dddddd;
   width: rem(143);
   height: rem(50);
-  color: #313131;
   font-size: rem(16);
+  color: #fff;
   font-style: normal;
   font-weight: 500;
   line-height: 130%;
   letter-spacing: rem(-0.24);
+  background:#D2AD84;
+
+  &:disabled{
+    background: #dddddd;
+    color: #313131;
+
+  }
 }
 
 .modal-close{
@@ -562,3 +585,6 @@
   align-items: center;
   justify-content: center;
 }
+
+
+
