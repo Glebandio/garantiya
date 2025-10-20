@@ -714,9 +714,6 @@ function Chats() {
         setAttachedFiles((prev) => [...prev, ...files]);
     };
 
-    const handleRemoveFile = (index) => {
-        setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
-    };
 
     const formatFileSize = (bytes) => {
         if (bytes === 0) return '0 Б';
@@ -868,7 +865,7 @@ function Chats() {
                                             </div>
                                         </div>
                                     ))}
-                                    {Object.values(typingUsers).length > 0 && (
+                                    {Object.values(typingUsers).filter(u => u.userId !== myId).length > 0 && (
                                         <div className="typing-indicator">
                                             <div className="typing-dots">
                                                 <span></span>
@@ -877,7 +874,10 @@ function Chats() {
                                             </div>
                                             <div className="typing-text">
                                                 {(() => {
-                                                    const names = Object.values(typingUsers).map(u => u.userName);
+                                                    const names = Object.values(typingUsers)
+                                                        .filter(u => u.userId !== myId)
+                                                        .map(u => u.userName);
+
                                                     if (names.length === 1) return `${names[0]} печатает...`;
                                                     if (names.length === 2) return `${names[0]} и ${names[1]} печатают...`;
                                                     return `${names.slice(0, -1).join(', ')} и ${names[names.length - 1]} печатают...`;
@@ -885,6 +885,7 @@ function Chats() {
                                             </div>
                                         </div>
                                     )}
+
                                     <div ref={messagesEndRef} />
                                 </>
                             ) : (
