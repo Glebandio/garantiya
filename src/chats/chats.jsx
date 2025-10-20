@@ -731,12 +731,12 @@ function Chats() {
         <div className="chats">
             <div className="chats__container">
                 <div className="chats__logo">
-                    <img className={'chats__logo-image'} src="/public/mini-logo.svg" alt=""/>
+                    <img className={'chats__logo-image'} src="/mini-logo.svg" alt=""/>
                     <p className={'chats__logo-name'}>Техническая поддержка</p>
                 </div>
                 <div className="chats__search">
                     <div className="chats__search-box">
-                        <img src="/public/search.svg" alt=""/>
+                        <img src="/search.svg" alt=""/>
                         <input
                             type="text"
                             placeholder={'Поиск'}
