@@ -40,7 +40,20 @@ function ChatElement({ chat, isSelected, onSelect }) {
                     </div>
                 </div>
                 <div className="chats__element-lower">
-                    {lastMessage}
+                    <p style={{width:'100%'}}>
+                    {lastMessage.slice(0, 20)}
+                    </p>
+                    {
+                        chat.unread_count > 0 ? (
+                            <div className={'chats__element-count'}>
+                                {chat.unread_count}
+                            </div>
+                        ) : (
+                            <>
+                            </>
+                        )
+                    }
+
                 </div>
             </div>
         </div>
