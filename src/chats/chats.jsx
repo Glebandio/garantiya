@@ -201,6 +201,7 @@ function Chats() {
         };
 
         if (selectedChat) {
+            readMessages()
             fetchUsers();
         }
     }, [selectedChat]);
@@ -478,9 +479,10 @@ function Chats() {
         }
     };
 
-    const readMessages = (messageIds) => {
+
+
+    const readMessages = () => {
         return sendWebSocketAction('read_message', {
-            // message_ids: messageIds,
             chat_id: selectedChat,
         });
     };
@@ -1028,33 +1030,33 @@ function Chats() {
                                         </div>
                                         {houses.length > 0 ? (
                                             houses.map(house => (
-                                        <div className={'modal__objects-elements'}>
-                                            {formatAddress(house?.full_address , house.status)}
-                                        </div>
+                                                <div className={'modal__objects-elements'}>
+                                                    {formatAddress(house?.full_address , house.status)}
+                                                </div>
                                             ))
                                         ) : (
                                             <></>
-                                            )}
+                                        )}
                                         {parking.length > 0 ? (
-                                            parking.map(parkplace => (
-                                                <div className={'modal__objects-elements'}>
-                                                   <div className="park">
-                                                       <div className="modal__adres-info">
-                                                       <p>Парковочное место № {parkplace.parking_no}</p>
-                                                           <span>
+                                                parking.map(parkplace => (
+                                                    <div className={'modal__objects-elements'}>
+                                                        <div className="park">
+                                                            <div className="modal__adres-info">
+                                                                <p>Парковочное место № {parkplace.parking_no}</p>
+                                                                <span>
                                                                Владелец
                                                            </span>
-                                                       </div>
-                                                       <p>
-                                                           {parkplace.name} {parkplace.parking_info}
-                                                       </p>
-                                                   </div>
-                                                </div>
-                                            )) ):
-                                                (
-                                            <>
-                                            </>
-                                                )
+                                                            </div>
+                                                            <p>
+                                                                {parkplace.name} {parkplace.parking_info}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )) ):
+                                            (
+                                                <>
+                                                </>
+                                            )
                                         }
                                     </div>
                                     <p className={'modal__category'}>Комментарий</p>
