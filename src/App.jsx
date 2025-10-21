@@ -38,7 +38,7 @@ function App() {
 
     return (
         <div className="login">
-            <img src="/public/logo.svg" alt="Logo" />
+            <img src="/logo.svg" alt="Logo" />
             <div className="login__form">
                 <p>Авторизация</p>
                 {error && <p className="error">{error}</p>}
