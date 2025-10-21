@@ -17,7 +17,7 @@ function ChatElement({ chat, isSelected, onSelect }) {
     };
 
     const interlocutorName = chat.title !== "Техподдержка" ? chat.title : chat?.interlocutor?.name || 'Неизвестный';
-    const lastMessage = chat?.last_message?.text !=null ? chat?.last_message?.text : 'Нет сообщений';
+    const lastMessage = chat?.last_message?.text !=null ? (chat?.last_message?.text == '' ? 'Файл' :  chat?.last_message?.text) : 'Нет сообщений';
     const createdAt = chat?.last_message?.text !=null ? chat.last_message.created_at : '00000'
 
 
